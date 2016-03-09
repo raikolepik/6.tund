@@ -41,10 +41,7 @@
          // käivitame siis kui lehte laeme
          console.log('>>>>loend');
 
-         //simulatsioon laeb kaua
-         window.setTimeout(function(){
-           document.querySelector('.loading').innerHTML = 'laetud!';
-         }, 3000);
+
 
        }
      },
@@ -89,7 +86,39 @@
 
            });
 
-       }
+       }else{
+
+		   //küsin AJAXIGA
+			var xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = function() {
+				if (xhttp.readyState == 4 && xhttp.status == 200) {
+
+					console.log(xhttp.responseText);
+					//tekst -> objekktideks
+					Moosipurk.instance.jars = JSON.parse(xhttp.responseText);
+					console.log(Moosipurk.instance.jars);
+
+					//teen purgid htmli
+					Moosipurk.instance.jars.forEach(function(jar){
+
+					   var new_jar = new Jar(jar.id, jar.title, jar.ingredients);
+
+					   var li = new_jar.createHtmlElement();
+					   document.querySelector('.list-of-jars').appendChild(li);
+
+				   });
+
+				   //salvestan localStoragisse
+				   localStorage.setItem('jars', JSON.stringify(Moosipurk.instance.jars));
+
+
+				}
+			};
+			xhttp.open("GET", "save.php", true);
+			xhttp.send();
+
+
+	   }
 
 
        // esimene loogika oleks see, et kuulame hiireklikki nupul
@@ -104,51 +133,53 @@
        document.querySelector('#search').addEventListener('keyup', this.search.bind(this));
 
      },
-     deleteJar: function(event){
-       //millele vajutasin SPAN
-       console.log(event.target);
+	 deleteJar: function(event){
 
-       //tema parent ehk mille sees ta on LI
-       console.log(event.target.parentNode);
+		// millele vajutasin SPAN
+		console.log(event.target);
 
-       //mille sees see on UL
-       console.log(event.target.parentNode.parentNode);
+		// tema parent ehk mille sees ta on LI
+		console.log(event.target.parentNode);
 
-       //id
-       console.log(event.target.dataset.id);
+		//mille sees see on UL
+		console.log(event.target.parentNode.parentNode);
 
-       var c = confirm("Oled kindel?");
-       //vajutas no, v pani ristist kinni
-       if(!c){ return; }
+		//id
+		console.log(event.target.dataset.id);
 
-       //Kustutan
-       console.log('Kustutan');
+		var c = confirm("Oled kindel?");
 
-       //Kustutan htmli
+		// vajutas no, pani ristist kinni
+		if(!c){	return; }
 
-       var ul = event.target.parentNode.parentNode;
-       var li = event.target.parentNode;
+		//KUSTUTAN
+		console.log('kustutan');
 
-       ul.removeChild(li);
+		// KUSTUTAN HTMLI
+		var ul = event.target.parentNode.parentNode;
+		var li = event.target.parentNode;
 
-       //Kustutan Objekti ka ja uuendan localStorageist
+		ul.removeChild(li);
 
-       var delete_id = event.target.dataset.id;
-       for(var i = 0; i < this.jars.length; i++){
-         console.log(this.jars[i].id + ' ' + delete_id);
-         if(this.jars[i].id == delete_id){
+		//KUSTUTAN OBJEKTI ja uuenda localStoragit
 
-           //see on see
-           //kustutan kohal i objekt ära
-           this.jars.splice(i, 1);
-           break;
-         }
-       }
-       localStorage.setItem('jars', JSON.stringify(this.jars));
+		var delete_id = event.target.dataset.id;
 
-     },
+		for(var i = 0; i < this.jars.length; i++){
+
+			if(this.jars[i].id == delete_id){
+				//see on see
+				//kustuta kohal i objekt ära
+				this.jars.splice(i, 1);
+				break;
+			}
+		}
+
+		localStorage.setItem('jars', JSON.stringify(this.jars));
 
 
+
+	 },
      search: function(event){
          //otsikasti väärtus
          var needle = document.querySelector('#search').value.toLowerCase();
@@ -187,8 +218,8 @@
 
        //console.log(title + ' ' + ingredients);
        //1) tekitan uue Jar'i
+	   var id = guid();
        var new_jar = new Jar(id, title, ingredients);
-       var id = guid();
 
        //lisan massiiivi purgi
        this.jars.push(new_jar);
@@ -196,27 +227,29 @@
        // JSON'i stringina salvestan localStorage'isse
        localStorage.setItem('jars', JSON.stringify(this.jars));
 
-      //AJAX
-       var xhttp = new XMLHttpRequest();
-       //mis juhtub kui päring lõppeb
-  xhttp.onreadystatechange = function() {
 
-    console.log(xhttp.readyState);
-    if (xhttp.readyState == 4 && xhttp.status == 200) {
+		//AJAX
+		var xhttp = new XMLHttpRequest();
 
-        console.log(xhttp.responseText);
-    }
-  };
+		//mis juhtub kui päring lõppeb
+		xhttp.onreadystatechange = function() {
 
-  //teeb päringu
-  xhttp.open("GET", "save.php?id="+id+"&title="+title+"&ingredients="+ingredients, true);
-  xhttp.send();
+			console.log(xhttp.readyState);
+
+			if (xhttp.readyState == 4 && xhttp.status == 200) {
+
+				console.log(xhttp.responseText);
+			}
+		};
+
+		//teeb päringu
+		xhttp.open("GET", "save.php?id="+id+"&title="+title+"&ingredients="+ingredients, true);
+		xhttp.send();
 
 
        // 2) lisan selle htmli listi juurde
        var li = new_jar.createHtmlElement();
        document.querySelector('.list-of-jars').appendChild(li);
-
 
 
      },
@@ -257,7 +290,7 @@
    }; // MOOSIPURGI LÕPP
 
    var Jar = function(new_id, new_title, new_ingredients){
-     this.id = new_id;
+	 this.id = new_id;
      this.title = new_title;
      this.ingredients = new_ingredients;
      console.log('created new jar');
@@ -293,40 +326,39 @@
 
        li.appendChild(span_with_content);
 
-
-	   //Delete nupp
+	   //DELETE nupp
 	   var span_delete = document.createElement('span');
 	   span_delete.style.color = "red";
 	   span_delete.style.cursor = "pointer";
-     //kustutamiseks panen id kaasa
-     span_delete.setAttribute("data-id", this.id);
+
+	   //kustutamiseks panen id kaasa
+	   span_delete.setAttribute("data-id", this.id);
 
 	   span_delete.innerHTML = " Delete";
 
 	   li.appendChild(span_delete);
 
-     //keegi vajutas nuppu
-     span_delete.addEventListener("click", Moosipurk.instance.deleteJar.bind(Moosipurk.instance));
-
-
+	   //keegi vajutas nuppu
+	   span_delete.addEventListener("click", Moosipurk.instance.deleteJar.bind(Moosipurk.instance));
 
        return li;
 
      }
    };
-   //Helper
+
+   //HELPER
    function guid(){
-    var d = new Date().getTime();
-    if(window.performance && typeof window.performance.now === "function"){
-        d += performance.now(); //use high-precision timer if available
-    }
-    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = (d + Math.random()*16)%16 | 0;
-        d = Math.floor(d/16);
-        return (c=='x' ? r : (r&0x3|0x8)).toString(16);
-    });
-    return uuid;
-}
+		var d = new Date().getTime();
+		if(window.performance && typeof window.performance.now === "function"){
+			d += performance.now(); //use high-precision timer if available
+		}
+		var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+			var r = (d + Math.random()*16)%16 | 0;
+			d = Math.floor(d/16);
+			return (c=='x' ? r : (r&0x3|0x8)).toString(16);
+		});
+		return uuid;
+	}
 
    // kui leht laetud käivitan Moosipurgi rakenduse
    window.onload = function(){
